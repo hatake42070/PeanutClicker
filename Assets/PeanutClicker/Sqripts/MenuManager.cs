@@ -1,73 +1,105 @@
-using UnityEngine;
+﻿using UnityEngine;
+using UnityEngine.UI;
+using System.Collections;
+using System.Collections.Generic;
 
 public class MenuManager : MonoBehaviour
 {
-    // インスペクターで、連動させたい全てのMenuAnimatorを登録する
-    public MenuAnimator[] menus;
+    [System.Serializable]
+    public struct MenuPair
+    {
+        public string name;
+        public Button menuButton;
+        public MenuAnimator menuPanel;
+    }
 
-    // 現在のメニューの開閉状況
+    [Header("Menu Setup")]
+    public List<MenuPair> menus = new List<MenuPair>();
+
+    [Header("Button Container Animation")]
+    public RectTransform buttonContainer;
+
+    // ★ここが重要: ボタンをどれくらい動かすか。
+    // パネルの幅が300なら、ここも300くらいにすると丁度よくなります。
+    public float containerSlideDistance = 220f;
+
+    public float slideSpeed = 1500f;
+
     private MenuAnimator currentOpenMenu = null;
+    private Vector2 containerDefaultPos;
+    private Vector2 containerMovedPos;
+    private Coroutine containerCoroutine;
 
     void Start()
     {
-        // 登録されている全てのメニューの位置を計算し、初期化する
-        foreach (MenuAnimator menu in menus)
+        if (buttonContainer != null)
         {
-            CalculatePositions(menu);
-            // anchoredPositionのset機能
-            menu.menuPanel.anchoredPosition = menu.menuClosePos;
-            menu.mainButton.anchoredPosition = menu.buttonClosePos;
+            containerDefaultPos = buttonContainer.anchoredPosition;
+            // ボタンコンテナを左へずらす
+            containerMovedPos = new Vector2(containerDefaultPos.x - containerSlideDistance, containerDefaultPos.y);
+        }
+
+        foreach (var pair in menus)
+        {
+            if (pair.menuButton != null && pair.menuPanel != null)
+            {
+                MenuAnimator targetPanel = pair.menuPanel;
+                pair.menuButton.onClick.AddListener(() => OnMenuButtonClicked(targetPanel));
+            }
         }
     }
 
-    // メニューとボタンの位置を計算
-    private void CalculatePositions(MenuAnimator menu)
+    private void OnMenuButtonClicked(MenuAnimator targetMenu)
     {
-        menu.menuClosePos = menu.menuPanel.anchoredPosition;
-        menu.buttonClosePos = menu.mainButton.anchoredPosition;
-        menu.menuOpenPos = new Vector2(menu.menuClosePos.x - menu.menuPanel.sizeDelta.x, menu.menuClosePos.y);
-        menu.buttonOpenPos = new Vector2(menu.buttonClosePos.x - menu.menuPanel.sizeDelta.x, menu.buttonClosePos.y);
-    }
+        targetMenu.transform.SetAsLastSibling();
 
-    // メニューボタンが押された時に実行され、
-    public void ToggleMenu(MenuAnimator targetMenu)
-    {
-        // ケース1: 何も開いていない状態で、新しいメニューを開く
-        if (currentOpenMenu == null)
+        // ケースA: 同じボタンを押した -> 閉じる（アニメーションあり）
+        if (currentOpenMenu == targetMenu)
         {
-            // パネルをアニメーションで開く
-            targetMenu.AnimatePanel(true);
-            // 全てのボタンをアニメーションで開く位置へ
-            foreach (MenuAnimator menu in menus)
-            {
-                menu.AnimateButton(true);
-            }
-            currentOpenMenu = targetMenu;
-        }
-        // ケース2: 開いているメニューを再度クリックして閉じる
-        else if (currentOpenMenu == targetMenu)
-        {
-            // パネルをアニメーションで閉じる
-            currentOpenMenu.AnimatePanel(false);
-            // 全てのボタンをアニメーションで閉じる位置へ
-            foreach (MenuAnimator menu in menus)
-            {
-                menu.AnimateButton(false);
-            }
+            targetMenu.SetMenuState(false);
+            MoveButtonContainer(false); // ボタンも戻す
             currentOpenMenu = null;
         }
-        // ケース3: あるメニューが開いている状態で、別のメニューに切り替える
+        // ケースB: 別のメニューに切り替え -> 瞬時に切り替え（アニメーションなし）
+        else if (currentOpenMenu != null)
+        {
+            // 開いているものを一瞬で閉じて、新しいのを一瞬で開く
+            currentOpenMenu.JumpToState(false);
+            targetMenu.JumpToState(true);
+
+            currentOpenMenu = targetMenu;
+            // ボタンコンテナは「開いた位置」のままキープ（動かさない）
+        }
+        // ケースC: 新しく開く -> 開く（アニメーションあり）
         else
         {
-            // 現在開いているパネルを【瞬時に】閉じる
-            currentOpenMenu.SetPanelState(false);
-            // ターゲットのパネルを【瞬時に】開く
-            targetMenu.SetPanelState(true);
-
-            // ボタンはすでに開いた位置にあるので、何もしない
-
-            // 現在開いているメニューの情報を更新
+            targetMenu.SetMenuState(true);
+            MoveButtonContainer(true); // ボタンをずらす
             currentOpenMenu = targetMenu;
         }
+    }
+
+    private void MoveButtonContainer(bool isOpen)
+    {
+        if (buttonContainer == null) return;
+
+        if (containerCoroutine != null) StopCoroutine(containerCoroutine);
+
+        Vector2 targetPos = isOpen ? containerMovedPos : containerDefaultPos;
+        containerCoroutine = StartCoroutine(SlideContainer(targetPos));
+    }
+
+    IEnumerator SlideContainer(Vector2 targetPos)
+    {
+        while (Vector2.Distance(buttonContainer.anchoredPosition, targetPos) > 1f)
+        {
+            buttonContainer.anchoredPosition = Vector2.MoveTowards(
+                buttonContainer.anchoredPosition,
+                targetPos,
+                slideSpeed * Time.deltaTime
+            );
+            yield return null;
+        }
+        buttonContainer.anchoredPosition = targetPos;
     }
 }
