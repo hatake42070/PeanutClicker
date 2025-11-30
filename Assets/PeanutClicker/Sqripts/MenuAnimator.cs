@@ -3,71 +3,59 @@ using System.Collections;
 
 public class MenuAnimator : MonoBehaviour
 {
-    public RectTransform menuPanel;
-    public RectTransform mainButton;
-    public float slideSpeed = 1000f;
+    [Header("Settings")]
+    public float slideSpeed = 1500f;
+    public bool slideLeft = true;
 
-    [HideInInspector] public Vector2 menuOpenPos;
-    [HideInInspector] public Vector2 menuClosePos;
-    [HideInInspector] public Vector2 buttonOpenPos;
-    [HideInInspector] public Vector2 buttonClosePos;
+    public bool IsOpen { get; private set; } = false;
 
-    private Coroutine panelAnimationCoroutine;
-    private Coroutine buttonAnimationCoroutine;
+    private RectTransform rectTransform;
+    private Vector2 closePos;
+    private Vector2 openPos;
+    private Coroutine currentCoroutine;
 
-    // パネルだけを開閉させるメソッド
-    public void AnimatePanel(bool isOpen)
+    void Awake()
     {
-        // アニメーションが実行中出ないか確認、実行中であれば止める
-        if (panelAnimationCoroutine != null)
-        {
-            StopCoroutine(panelAnimationCoroutine);
-        }
-        Vector2 targetPos = isOpen ? menuOpenPos : menuClosePos;
-        panelAnimationCoroutine = StartCoroutine(Slide(menuPanel, menuPanel.anchoredPosition, targetPos));
+        rectTransform = GetComponent<RectTransform>();
+        closePos = rectTransform.anchoredPosition;
+
+        float width = rectTransform.sizeDelta.x;
+        float direction = slideLeft ? -1 : 1;
+
+        openPos = new Vector2(closePos.x + (width * direction), closePos.y);
     }
 
-    // ボタンだけを開閉させるメソッド
-    // true: ボタンを『開いた状態の位置』へアニメーションさせる
-    // false: ボタンを『閉じた状態の位置』へアニメーションさせる
-    public void AnimateButton(bool isOpen)
+    // 通常のアニメーション付き移動
+    public void SetMenuState(bool open)
     {
-        if (buttonAnimationCoroutine != null)
-        {
-            StopCoroutine(buttonAnimationCoroutine);
-        }
-        Vector2 targetPos = isOpen ? buttonOpenPos : buttonClosePos;
-        buttonAnimationCoroutine = StartCoroutine(Slide(mainButton, mainButton.anchoredPosition, targetPos));
+        if (IsOpen == open) return;
+        IsOpen = open;
+
+        if (currentCoroutine != null) StopCoroutine(currentCoroutine);
+        currentCoroutine = StartCoroutine(SlideCoroutine(open ? openPos : closePos));
     }
 
-    public void SetPanelState(bool isOpen)
+    // ★追加: アニメーションなしで瞬時に移動（切り替え用）
+    public void JumpToState(bool open)
     {
-        // 実行中のパネルアニメーションがあれば停止
-        if (panelAnimationCoroutine != null)
-        {
-            StopCoroutine(panelAnimationCoroutine);
-        }
-        // パネルの位置を直接設定する
-        menuPanel.anchoredPosition = isOpen ? menuOpenPos : menuClosePos;
+        IsOpen = open;
+        if (currentCoroutine != null) StopCoroutine(currentCoroutine);
+
+        // 即座に座標を書き換える
+        rectTransform.anchoredPosition = open ? openPos : closePos;
     }
 
-    // RectTransformをスライドさせる汎用コルーチン
-    private IEnumerator Slide(RectTransform target, Vector2 from, Vector2 to)
+    IEnumerator SlideCoroutine(Vector2 targetPos)
     {
-        float t = 0;
-        float distance = Vector2.Distance(from, to);
-
-        if (distance <= 0)
+        while (Vector2.Distance(rectTransform.anchoredPosition, targetPos) > 1f)
         {
-            yield break;
-        }
-
-        while (t < 1)
-        {
-            t += Time.deltaTime * slideSpeed / distance;
-            target.anchoredPosition = Vector2.Lerp(from, to, t);
+            rectTransform.anchoredPosition = Vector2.MoveTowards(
+                rectTransform.anchoredPosition,
+                targetPos,
+                slideSpeed * Time.deltaTime
+            );
             yield return null;
         }
-        target.anchoredPosition = to;
+        rectTransform.anchoredPosition = targetPos;
     }
 }
