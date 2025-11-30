@@ -94,9 +94,19 @@ public class GameModel : MonoBehaviour
     {
         if (Money >= PriceUpgradeCost)
         {
+            // お金を払う
             Money -= PriceUpgradeCost;
-            PeanutPrice++;
-            PriceUpgradeCost += 100;
+
+            // 1. 効果を上げる（インフレさせる）
+            // 現在の価格の 10% 分を上乗せする (+1は最低保証)
+            // これなら後半、1回強化するだけで +1000万 とかなります
+            PeanutPrice += (PeanutPrice / 10) + 1;
+
+            // 2. コストを上げる（急激に増やす）
+            // 毎回 1.4倍 (140%) にする
+            // 100 -> 140 -> 196 -> 274 -> 384... と増えていきます
+            PriceUpgradeCost = PriceUpgradeCost * 140 / 100;
+
             NotifyChanged();
         }
     }
