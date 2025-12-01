@@ -4,6 +4,8 @@ public class PeanutShell : MonoBehaviour
 {
     [SerializeField]
     private Peanut peanutPrefab;
+    [SerializeField]
+    private GameAudioView gameAudioView;
 
     private Animator animator;
 
@@ -12,16 +14,11 @@ public class PeanutShell : MonoBehaviour
         animator = GetComponent<Animator>();
     }
 
-    // クリックされた時の処理
-    private void OnMouseDown()
-    {
-        HandleInteraction();
-    }
-
-    // マウスオーバー時の右クリック処理（元の仕様維持）
+    // マウスオーバー時のクリック処理
     void OnMouseOver()
     {
-        if (Input.GetMouseButtonDown(1))
+        // 「左クリック(0)」 または 「右クリック(1)」 が押された瞬間なら実行
+        if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
         {
             HandleInteraction();
         }
@@ -29,10 +26,15 @@ public class PeanutShell : MonoBehaviour
 
     private void HandleInteraction()
     {
-        // 1. Modelにお金を増やすよう命令
+        // Modelにお金を増やすよう命令
         GameModel.Instance.EarnMoney();
+        // SE再生
+        if (gameAudioView != null)
+        {
+            gameAudioView.OnClickPeanut();
+        }
 
-        // 2. 演出（アニメーションと生成）
+        // 演出（アニメーションと生成）
         animator.SetTrigger("Squish");
         SpawnPeanuts();
     }
