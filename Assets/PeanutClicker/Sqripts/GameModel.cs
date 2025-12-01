@@ -105,7 +105,7 @@ public class GameModel : MonoBehaviour
             // 2. コストを上げる（急激に増やす）
             // 毎回 1.4倍 (140%) にする
             // 100 -> 140 -> 196 -> 274 -> 384... と増えていきます
-            PriceUpgradeCost = PriceUpgradeCost * 140 / 100;
+            PriceUpgradeCost = PriceUpgradeCost * 250 / 100;
 
             NotifyChanged();
         }
@@ -124,10 +124,10 @@ public class GameModel : MonoBehaviour
             else
             {
                 // インスペクターで設定した変数を書き換える
-                _autoClickInterval *= 0.9f;
+                _autoClickInterval--;
             }
 
-            AutoClickUpgradeCost += 150;
+            AutoClickUpgradeCost = AutoClickUpgradeCost * 250 / 100;
             AutoClickLevel++;
             NotifyChanged();
         }
