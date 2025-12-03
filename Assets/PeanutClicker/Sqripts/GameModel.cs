@@ -32,8 +32,8 @@ public class GameModel : MonoBehaviour
     public BigInteger PeanutPrice { get; private set; }
 
     // そのまま変数を返す（ラムダ式）
-    public int PeanutsPerClick => _peanutsPerClick;
-    public float AutoClickInterval => _autoClickInterval;
+    public int PeanutsPerClick => _peanutsPerClick; // 1クリックあたりの落花生数
+    public float AutoClickInterval => _autoClickInterval; // 自動クリック間隔（秒）
 
     // 他のパラメータ
     public BigInteger PriceUpgradeCost { get; private set; } = 100;
