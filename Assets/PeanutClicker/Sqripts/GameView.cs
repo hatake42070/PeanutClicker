@@ -47,7 +47,7 @@ public class GameView : MonoBehaviour
             GameModel.Instance.OnDataChanged -= UpdateUI;
         }
 
-        // 念のためボタンの登録も解除しておく（必須ではありませんが丁寧な実装です）
+        // 念のためボタンの登録も解除しておく
         if (priceUpgradeButton != null) priceUpgradeButton.onClick.RemoveAllListeners();
         if (autoClickButton != null) autoClickButton.onClick.RemoveAllListeners();
     }
