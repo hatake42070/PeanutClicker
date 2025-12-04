@@ -1,5 +1,8 @@
 using UnityEngine;
 
+/// <summary>
+/// ピーナッツシェルをたたいたときの処理
+/// </summary>
 public class PeanutShell : MonoBehaviour
 {
     [SerializeField]
@@ -14,7 +17,9 @@ public class PeanutShell : MonoBehaviour
         animator = GetComponent<Animator>();
     }
 
-    // マウスオーバー時のクリック処理
+     /// <summary>
+     /// オーバー時のクリック処理
+     /// </summary>
     void OnMouseOver()
     {
         // 「左クリック(0)」 または 「右クリック(1)」 が押された瞬間なら実行
