@@ -1,5 +1,8 @@
 using UnityEngine;
 
+/// <summary>
+/// `落ちてくるピーナッツ` を表すクラス
+/// </summary>
 public class Peanut : MonoBehaviour
 {
     [SerializeField] private Rigidbody2D _rigidbody2D;
